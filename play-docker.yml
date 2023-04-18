@@ -1,0 +1,46 @@
+---
+- hosts: streamlit
+  become: true
+  tasks:
+    - name: install dipendens
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
+    
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    
+    - name: Add repository docker
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+    
+    - name: install docker
+      apt:
+        update_cache: yes
+        name: docker-ce
+        state: latest
+    
+    - name: start docker daemon
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: install acl 
+      command: sudo apt install acl
+   
+    - name: setfacl
+      command: sudo setfacl -m user:streamlit:rw /var/run/docker.sock
+
+    - name: docker pull image
+      command: docker run -d --name=streamlit -p 8501:8501 aurogon96/streamlit
